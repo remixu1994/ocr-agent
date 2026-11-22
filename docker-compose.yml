@@ -1,0 +1,25 @@
+services:
+  ocr:
+    image: ${OCR_AGENT_IMAGE:?Set OCR_AGENT_IMAGE in .env}
+    restart: unless-stopped
+    environment:
+      OCR_API_TOKEN: ${OCR_API_TOKEN:?Set a private OCR_API_TOKEN in .env}
+    ports:
+      - "127.0.0.1:${OCR_PORT:-18080}:8080"
+    volumes:
+      - ocr_models:/var/lib/ocr-models
+    read_only: true
+    tmpfs:
+      - "/tmp:rw,nosuid,nodev,size=512m,mode=1777"
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3).close()"]
+      start_period: 10m
+      interval: 20s
+      timeout: 5s
+      retries: 4
+
+volumes:
+  ocr_models:

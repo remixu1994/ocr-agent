@@ -1,0 +1,6 @@
+*
+!requirements.txt
+!ocr_service
+!ocr_service/*.py
+!tests
+!tests/test_*.py

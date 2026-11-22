@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+__pycache__/
+.venv/
+build/
+reports/
+model-cache/
+task_plan.md
+findings.md
+progress.md
