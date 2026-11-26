@@ -16,7 +16,9 @@ export OCR_API_TOKEN
 OCR_API_TOKEN="$(openssl rand -hex 32)"
 
 # No host port and no real document: run the probe inside the final image.
+# Match the NAS deployment's writable model cache while keeping the root read-only.
 container="$(docker run -d --read-only --cap-drop ALL --security-opt no-new-privileges \
+  --volume /var/lib/ocr-models \
   --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 -e OCR_API_TOKEN ocr-agent:verified)"
 trap 'docker rm -fv "$container" >/dev/null' EXIT
 if ! docker exec -i "$container" python - < tests/smoke_container.py; then
