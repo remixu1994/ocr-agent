@@ -13,6 +13,8 @@
 | POST `/v1/documents/recognize` | 通用 OCR：文字块、坐标、表格单元格 |
 | POST `/v1/ocr` | 兼容 KidneyCare Android：体检指标、单位、参考区间、采样日期等候选值 |
 
+`/v1/ocr` 的 schema v1 保留 `specimen` 分类（`blood`、`urine`、`unknown`），并补充 `specimen_detail`（`血浆`、`血清`、`全血`、`血液`、`尿液` 或 `null`）。只从明确且一致的标本字段提取；不根据指标名称猜测整单标本。
+
 ```bash
 curl --fail-with-body "https://ocr.example.com/v1/documents/recognize" \
   -H "Authorization: Bearer ${OCR_API_TOKEN}" \

@@ -4,6 +4,7 @@ import re
 from datetime import date
 from html.parser import HTMLParser
 from statistics import median
+from unicodedata import normalize
 
 MAX_ROWS = 200
 VALUE = re.compile(
@@ -23,6 +24,12 @@ HEADINGS = {
     "单位": "unit", "参考区间": "reference", "参考范围": "reference",
 }
 REQUIRED = {"name", "value", "unit", "reference"}
+SPECIMEN_FIELD = re.compile(
+    r"(?:标\s*本|样\s*本)\s*(?:类\s*型\s*)?"
+    r"(?:\(\s*(?:type|specimen(?:\s+type)?)\s*\)\s*)?:?\s*"
+    r"(血\s*浆|血\s*清|全\s*血|血\s*液|尿\s*液|尿(?![ \t]*[\u4e00-\u9fff]))",
+    re.I,
+)
 
 
 def compact(text: str) -> str:
@@ -173,10 +180,12 @@ def spatial_candidates(ocr: dict) -> list[dict]:
 def report_payload(result: dict) -> dict:
     overall = result.get("overall_ocr_res") or {}
     lines = "\n".join(s for s in overall.get("rec_texts", []) if isinstance(s, str))
-    specimen = "unknown"
-    found = re.search(r"(?:标本|样本)(?:类型)?\s*[:：]?\s*(尿液|尿|血液|全血|血清|血浆)", lines)
-    if found:
-        specimen = "urine" if found[1].startswith("尿") else "blood"
+    labels = {compact(match[1]).replace("尿液", "尿")
+              for match in SPECIMEN_FIELD.finditer(normalize("NFKC", lines))}
+    detail = next(iter(labels)) if len(labels) == 1 else None
+    if detail == "尿":
+        detail = "尿液"
+    specimen = "unknown" if detail is None else "urine" if detail == "尿液" else "blood"
 
     day, source, sample_time = None, "manual", None
     matches = list(DATE_FIELD.finditer(lines))
@@ -200,6 +209,6 @@ def report_payload(result: dict) -> dict:
         strategy = "spatial" if rows else "none"
     return {
         "schema_version": 1, "engine": "PP-StructureV3",
-        "strategy": strategy, "specimen": specimen, "date": day,
+        "strategy": strategy, "specimen": specimen, "specimen_detail": detail, "date": day,
         "date_source": source, "sample_time": sample_time, "rows": rows,
     }

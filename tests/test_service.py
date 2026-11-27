@@ -25,7 +25,7 @@ class FakeEngine:
         return {
             "table_res_list": [{"pred_html": HTML}],
             "overall_ocr_res": {"rec_texts": [
-                "标本：血浆", "报告日期：2025-10-14", "采样时间：2025-10-13 08:12",
+                "标本（Type）：", "血浆", "报告日期：2025-10-14", "采样时间：2025-10-13 08:12",
                 "该行不应进入响应",
             ], "rec_boxes": [[1, 1, 24, 8], [0, 0, 1000, 1000]]},
         }
@@ -62,6 +62,7 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(payload["date_source"], "sample")
         self.assertEqual(payload["sample_time"], "08:12")
         self.assertEqual(payload["specimen"], "blood")
+        self.assertEqual(payload["specimen_detail"], "血浆")
         self.assertEqual([r["result"] for r in payload["rows"]], ["4.28", "122", "80"])
         self.assertEqual(payload["rows"][0]["unit"], "mmo1/L")
         self.assertNotIn("该行", result.text)
